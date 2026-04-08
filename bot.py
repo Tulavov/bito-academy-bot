@@ -1033,6 +1033,8 @@ async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ── MAIN ─────────────────────────────────────────────────────────────────
 def main():
+    print("🤖 BITO Academy Bot ishga tushmoqda...")
+    
     app = Application.builder().token(BOT_TOKEN).build()
     
     app.add_handler(CommandHandler("start", start))
@@ -1040,8 +1042,14 @@ def main():
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     
-    print("🤖 BITO Academy Bot ishga tushdi!")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    print("✅ Bot muvaffaqiyatli ishga tushdi!")
+    app.run_polling(
+        allowed_updates=Update.ALL_TYPES,
+        drop_pending_updates=True,
+        poll_interval=1.0,
+        timeout=30,
+        close_loop=False
+    )
 
 if __name__ == "__main__":
     main()
