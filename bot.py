@@ -1031,6 +1031,23 @@ async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown"
     )
 
+
+async def open_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Mini App ni ochish"""
+    # GitHub Pages URL
+    MINIAPP_URL = "https://tulavov.github.io/bito-academy-bot/miniapp"
+    
+    kb = InlineKeyboardMarkup([[
+        InlineKeyboardButton(
+            "🎓 BITO Academy ochish",
+            web_app={"url": MINIAPP_URL}
+        )
+    ]])
+    await update.message.reply_text(
+        "👆 Tugmani bosib BITO Academy ni oching!",
+        reply_markup=kb
+    )
+
 # ── MAIN ─────────────────────────────────────────────────────────────────
 def main():
     print("🤖 BITO Academy Bot ishga tushmoqda...")
@@ -1038,6 +1055,7 @@ def main():
     app = Application.builder().token(BOT_TOKEN).build()
     
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("app", open_app))
     app.add_handler(CommandHandler("stats", admin_stats))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))

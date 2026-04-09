@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BITO Academy</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#0850D9;--blue-dim:rgba(8,80,217,0.15);--blue-border:rgba(8,80,217,0.3);
+  --bg:#07090f;--bg2:#0d1117;--bg3:#141b27;--bg4:#1a2235;
+  --border:rgba(255,255,255,0.07);--text:#e2e8f4;--text-dim:#5a6a8a;--text-mid:#8a9ab8;
+  --green:#00d97e;--red:#ff4444;--yellow:#ffb800;--r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  padding-bottom:80px;
+}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--blue);}
+
+/* TOP BAR */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(7,9,15,0.95);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:12px 16px;
+  display:flex;align-items:center;gap:10px;
+}
+.topbar-logo{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;}
+.topbar-logo span{color:var(--blue);}
+.topbar-user{margin-left:auto;font-size:12px;color:var(--text-mid);}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(13,17,23,0.97);
+  backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  display:flex;
+  padding:8px 0 calc(8px + env(safe-area-inset-bottom));
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 4px;cursor:pointer;
+  font-size:10px;color:var(--text-dim);
+  transition:.15s;border:none;background:none;
+}
+.nav-btn.active{color:var(--blue);}
+.nav-btn .icon{font-size:22px;}
+
+/* PAGES */
+.page{display:none;padding:16px;}
+.page.active{display:block;}
+
+/* CARDS */
+.card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:16px;padding:16px;margin-bottom:12px;
+}
+.section-title{
+  font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;
+  margin-bottom:12px;
+}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.stat{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:14px;padding:14px;position:relative;overflow:hidden;
+}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue);}
+.stat.green::before{background:var(--green);}
+.stat.yellow::before{background:var(--yellow);}
+.stat.orange::before{background:orange;}
+.stat-num{font-family:'Unbounded',sans-serif;font-size:24px;font-weight:900;color:#fff;}
+.stat-label{font-size:11px;color:var(--text-dim);margin-top:2px;}
+
+/* PROGRESS RING */
+.progress-ring-wrap{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.ring{position:relative;width:70px;height:70px;flex-shrink:0;}
+.ring svg{transform:rotate(-90deg);}
+.ring-val{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;
+}
+.ring-info .big{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;}
+.ring-info .small{font-size:12px;color:var(--text-dim);margin-top:4px;}
+
+/* LESSON LIST */
+.lesson-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);margin-bottom:8px;
+  cursor:pointer;transition:.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.lesson-item:active{background:var(--bg4);}
+.lesson-num{
+  width:34px;height:34px;flex-shrink:0;
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;
+  background:var(--blue-dim);border:1px solid var(--blue-border);color:var(--blue);
+}
+.lesson-num.done{background:rgba(0,217,126,0.12);border-color:var(--green);color:var(--green);}
+.lesson-num.locked{background:rgba(255,255,255,0.05);border-color:var(--border);color:var(--text-dim);}
+.lesson-info{flex:1;}
+.lesson-title{font-size:13px;font-weight:600;margin-bottom:2px;}
+.lesson-meta{font-size:11px;color:var(--text-dim);}
+.lesson-arrow{color:var(--text-dim);font-size:16px;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-blue{background:var(--blue-dim);color:var(--blue);}
+.badge-green{background:rgba(0,217,126,0.12);color:var(--green);}
+.badge-red{background:rgba(255,68,68,0.12);color:var(--red);}
+.badge-yellow{background:rgba(255,184,0,0.12);color:var(--yellow);}
+.badge-gray{background:rgba(255,255,255,0.06);color:var(--text-mid);}
+
+/* PROGRESS BAR */
+.progress-bar{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-top:6px;}
+.progress-fill{height:100%;background:var(--blue);border-radius:3px;transition:.5s;}
+.progress-fill.green{background:var(--green);}
+
+/* TABLE */
+.user-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.user-item:last-child{border-bottom:none;}
+.avatar{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  background:var(--blue-dim);border:1px solid var(--blue-border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;color:var(--blue);
+}
+.user-info{flex:1;}
+.user-name{font-size:13px;font-weight:600;}
+.user-meta{font-size:11px;color:var(--text-dim);}
+
+/* LESSON DETAIL */
+.lesson-detail{display:none;}
+.lesson-detail.show{display:block;}
+.back-btn{
+  display:flex;align-items:center;gap:6px;
+  color:var(--blue);font-size:13px;font-weight:600;
+  cursor:pointer;margin-bottom:16px;
+  background:none;border:none;
+  padding:0;
+}
+.video-wrap{
+  position:relative;padding-bottom:56.25%;height:0;
+  border-radius:var(--r);background:var(--bg3);overflow:hidden;margin-bottom:16px;
+}
+.video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
+.theory-box{
+  background:var(--bg3);border-radius:var(--r);padding:14px;
+  font-size:13px;line-height:1.8;white-space:pre-wrap;margin-bottom:14px;
+}
+.task-item{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);
+  font-size:13px;
+}
+.complete-btn{
+  width:100%;padding:14px;margin-top:16px;
+  background:var(--green);color:#000;font-weight:700;font-size:14px;
+  border:none;border-radius:var(--r);cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.complete-btn:disabled{background:var(--bg4);color:var(--text-dim);}
+
+/* EXAM */
+.q-card{background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:10px;}
+.q-text{font-size:13px;font-weight:600;margin-bottom:12px;line-height:1.5;}
+.q-opt{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;border-radius:8px;
+  border:1px solid var(--border);
+  cursor:pointer;font-size:13px;margin-bottom:6px;transition:.15s;
+}
+.q-opt:active{transform:scale(0.98);}
+.q-opt.selected{border-color:var(--blue);background:var(--blue-dim);}
+.q-opt.correct{border-color:var(--green);background:rgba(0,217,126,0.1);}
+.q-opt.wrong{border-color:var(--red);background:rgba(255,68,68,0.1);}
+
+/* FORM */
+.form-group{margin-bottom:14px;}
+.form-label{font-size:11px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;display:block;}
+.form-input,.form-select,.form-textarea{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);padding:11px 14px;
+  color:var(--text);font-size:14px;outline:none;
+  font-family:'Inter',sans-serif;transition:.2s;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--blue);}
+.form-select option{background:var(--bg3);}
+.form-textarea{resize:vertical;min-height:80px;}
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 16px;border-radius:var(--r);
+  font-size:14px;font-weight:600;cursor:pointer;border:none;
+  font-family:'Inter',sans-serif;transition:.15s;width:100%;
+}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--blue);color:#fff;margin-bottom:8px;}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border);color:var(--text-mid);}
+.btn-danger{background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.2);}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:90px;left:16px;right:16px;z-index:999;
+  background:var(--bg2);border:1px solid var(--blue-border);
+  border-radius:var(--r);padding:12px 16px;
+  font-size:13px;font-weight:500;text-align:center;
+  transform:translateY(20px);opacity:0;transition:.3s;pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:rgba(0,217,126,0.4);color:var(--green);}
+.toast.error{border-color:rgba(255,68,68,0.4);color:var(--red);}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,0.8);
+  display:none;align-items:flex-end;justify-content:center;
+}
+.modal-overlay.show{display:flex;}
+.modal{
+  background:var(--bg2);border-top:1px solid var(--blue-border);
+  border-radius:20px 20px 0 0;
+  padding:20px 16px calc(20px + env(safe-area-inset-bottom));
+  width:100%;max-height:85vh;overflow-y:auto;
+}
+.modal-title{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;margin-bottom:20px;}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+
+.empty{text-align:center;padding:40px 20px;color:var(--text-dim);}
+.empty-icon{font-size:40px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">BITO<span>.</span></div>
+  <div id="topbar-role" class="badge badge-blue" style="font-size:10px;">—</div>
+  <div class="topbar-user" id="topbar-user"></div>
+</div>
+
+<!-- PAGES -->
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-home">
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat"><div class="stat-num" id="s-total">—</div><div class="stat-label">Integratorlar</div></div>
+    <div class="stat green"><div class="stat-num" id="s-active">—</div><div class="stat-label">Faol</div></div>
+    <div class="stat yellow"><div class="stat-num" id="s-cert">—</div><div class="stat-label">Sertifikat</div></div>
+    <div class="stat orange"><div class="stat-num" id="s-lessons">—</div><div class="stat-label">Darslar</div></div>
+  </div>
+  <div class="card">
+    <div class="section-title">🏆 Top integratorlar</div>
+    <div id="top-list"><div class="empty"><div class="empty-icon">🎯</div>Ma'lumot yo'q</div></div>
+  </div>
+</div>
+
+<!-- KURS -->
+<div class="page" id="page-kurs">
+  <!-- Lesson list -->
+  <div id="lessons-list-view">
+    <div class="progress-ring-wrap">
+      <div class="ring">
+        <svg width="70" height="70" viewBox="0 0 70 70">
+          <circle cx="35" cy="35" r="28" fill="none" stroke="var(--bg4)" stroke-width="7"/>
+          <circle cx="35" cy="35" r="28" fill="none" stroke="var(--blue)" stroke-width="7"
+            stroke-dasharray="176" id="ring-circle" stroke-dashoffset="176" stroke-linecap="round"/>
+        </svg>
+        <div class="ring-val" id="ring-pct">0%</div>
+      </div>
+      <div class="ring-info">
+        <div class="big" id="ring-days">0/14</div>
+        <div class="small" id="ring-streak">🔥 0 kun streak</div>
+        <div class="small" id="ring-score">⭐ 0 ball</div>
+      </div>
+    </div>
+    <div id="my-lessons"></div>
+  </div>
+
+  <!-- Lesson detail -->
+  <div id="lesson-detail-view" style="display:none;">
+    <button class="back-btn" onclick="showLessonList()">← Orqaga</button>
+    <div id="lesson-detail-content"></div>
+  </div>
+</div>
+
+<!-- TEST -->
+<div class="page" id="page-test">
+  <div id="test-intro" class="card">
+    <div class="section-title">📝 Test topshirish</div>
+    <p style="color:var(--text-mid);font-size:13px;line-height:1.7;margin-bottom:16px;">
+      ✅ O'tish: <strong style="color:var(--green)">70%+</strong><br>
+      ⏱ Vaqt: <strong>45 daqiqa</strong><br>
+      ❌ Pastda qayta topshirish
+    </p>
+    <button class="btn btn-primary" onclick="startTest()">🚀 Boshlash</button>
+  </div>
+  <div id="test-questions" style="display:none;"></div>
+  <div id="test-result" style="display:none;text-align:center;padding:20px;"></div>
+</div>
+
+<!-- USERS (admin/mentor) -->
+<div class="page" id="page-users">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div class="section-title" style="margin:0;">👥 Foydalanuvchilar</div>
+    <button class="btn btn-primary" style="width:auto;padding:8px 14px;font-size:12px;" onclick="showAddUser()">+ Qo'shish</button>
+  </div>
+  <div id="users-list"></div>
+</div>
+
+<!-- SOZLAMALAR -->
+<div class="page" id="page-settings">
+  <!-- Admin settings -->
+  <div id="admin-settings">
+    <div class="card">
+      <div class="section-title">📚 Darslar boshqaruvi</div>
+      <button class="btn btn-primary" onclick="showAddLesson()">+ Dars qo'shish</button>
+      <div id="admin-lessons-list" style="margin-top:12px;"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">🧠 Savollar</div>
+      <button class="btn btn-primary" onclick="showAddQuestion()">+ Savol qo'shish</button>
+      <div id="admin-questions-list" style="margin-top:12px;"></div>
+    </div>
+  </div>
+  <!-- User settings -->
+  <div id="user-settings" style="display:none;">
+    <div class="card">
+      <div class="section-title">⚙️ Sozlamalar</div>
+      <div class="form-group">
+        <label class="form-label">Joriy parol</label>
+        <input class="form-input" type="password" id="cur-pass" placeholder="••••••">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Yangi parol</label>
+        <input class="form-input" type="password" id="new-pass" placeholder="••••••">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tasdiqlash</label>
+        <input class="form-input" type="password" id="conf-pass" placeholder="••••••">
+      </div>
+      <button class="btn btn-primary" onclick="changePass()">🔐 O'zgartirish</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottom-nav"></nav>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-add-user">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👤 Foydalanuvchi qo'shish</div>
+    <div class="form-group"><label class="form-label">To'liq ism</label><input class="form-input" id="nu-name" placeholder="Ism Familiya"></div>
+    <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="nu-user" placeholder="username"></div>
+    <div class="form-group"><label class="form-label">Parol</label><input class="form-input" type="password" id="nu-pass" placeholder="••••••"></div>
+    <div class="form-group"><label class="form-label">Rol</label>
+      <select class="form-select" id="nu-role">
+        <option value="integrator">Integrator</option>
+        <option value="mentor">Mentor</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="addUser()">✅ Qo'shish</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-add-user')">Bekor</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-lesson">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📚 Dars qo'shish</div>
+    <input type="hidden" id="el-id">
+    <div class="form-group"><label class="form-label">Kun</label><input class="form-input" type="number" id="el-day" placeholder="1-14" min="1" max="14"></div>
+    <div class="form-group"><label class="form-label">Sarlavha</label><input class="form-input" id="el-title" placeholder="Dars nomi"></div>
+    <div class="form-group"><label class="form-label">Nazariya</label><textarea class="form-textarea" id="el-theory" placeholder="Dars mazmuni..."></textarea></div>
+    <div class="form-group"><label class="form-label">YouTube link</label><input class="form-input" id="el-video" placeholder="https://youtube.com/watch?v=..."></div>
+    <div class="form-group"><label class="form-label">Uy vazifasi</label><input class="form-input" id="el-hw" placeholder="Topshiriq..."></div>
+    <div class="form-group"><label class="form-label">Topshiriqlar (har biri yangi qatorda)</label><textarea class="form-textarea" id="el-tasks" placeholder="1-topshiriq&#10;2-topshiriq"></textarea></div>
+    <button class="btn btn-primary" onclick="saveLesson()">💾 Saqlash</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-add-lesson')">Bekor</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-question">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🧠 Savol qo'shish</div>
+    <input type="hidden" id="eq-id">
+    <div class="form-group"><label class="form-label">Kun</label><input class="form-input" type="number" id="eq-day" placeholder="1-14"></div>
+    <div class="form-group"><label class="form-label">Savol</label><textarea class="form-textarea" id="eq-text" placeholder="Savol matni..."></textarea></div>
+    <div class="form-group"><label class="form-label">A variant</label><input class="form-input" id="eq-a" placeholder="Birinchi variant"></div>
+    <div class="form-group"><label class="form-label">B variant</label><input class="form-input" id="eq-b" placeholder="Ikkinchi variant"></div>
+    <div class="form-group"><label class="form-label">C variant</label><input class="form-input" id="eq-c" placeholder="Uchinchi variant"></div>
+    <div class="form-group"><label class="form-label">D variant</label><input class="form-input" id="eq-d" placeholder="To'rtinchi variant"></div>
+    <div class="form-group"><label class="form-label">To'g'ri javob</label>
+      <select class="form-select" id="eq-correct">
+        <option value="0">A</option><option value="1">B</option>
+        <option value="2">C</option><option value="3">D</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="saveQuestion()">💾 Saqlash</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-add-question')">Bekor</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ TELEGRAM WEB APP ════════════════════════════════════════
+const tg = window.Telegram?.WebApp;
+if(tg){
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#07090f');
+  tg.setBackgroundColor('#07090f');
+}
+
+// ═══ DB ══════════════════════════════════════════════════════
+const DB = {
+  get(k){try{return JSON.parse(localStorage.getItem('bito_'+k))||null}catch{return null}},
+  set(k,v){localStorage.setItem('bito_'+k,JSON.stringify(v))},
+};
+
+function initDB(){
+  if(!DB.get('users')){
+    DB.set('users',[
+      {id:1,fullname:'Uchkun Tulavov',username:'admin',password:'bito2024',role:'admin',score:0,days:[],streak:0,created:Date.now()},
+      {id:2,fullname:'Mentor Ali',username:'mentor1',password:'mentor123',role:'mentor',score:0,days:[],streak:0,created:Date.now()},
+    ]);
+  }
+  if(!DB.get('lessons')){
+    DB.set('lessons',[
+      {id:1,day:1,title:'BITO nima va interfeys',theory:'Bito ERP — do\'kon egasining barcha ishini bitta joyga yig\'adigan dastur.',video:'',homework:'Screenshot yuboring',tasks:['Bito.uz dan ro\'yxatdan o\'ting','Interfeys bilan tanishing','Tashkilot yarating']},
+      {id:2,day:2,title:'Ombor — mahsulotlar',theory:'Mahsulot = nomi + narxi + kategoriyasi + o\'lchov birligi.',video:'',homework:'20 ta mahsulot kiriting',tasks:['10 ta mahsulot kiriting','3 ta kategoriya yarating','Barkod bilan qidiring']},
+      {id:3,day:3,title:'Ombor — qoldiq va sklad',theory:'Sklad, kirim/chiqim, inventarizatsiya tushunchalari.',video:'',homework:'Inventarizatsiya screenshot',tasks:['2 ta sklad yarating','Qoldiq kiriting','Inventarizatsiya o\'tkazing']},
+    ]);
+  }
+  if(!DB.get('questions')){
+    DB.set('questions',[
+      {id:1,day:1,text:'BITO dasturida tashkilot yaratgandan keyin qaysi bo\'limga o\'tiladi?',options:['Ombor','Sotuv','Sozlamalar','Moliya'],correct:2},
+      {id:2,day:2,text:'Mahsulotga barkod qo\'shishning maqsadi nima?',options:['Ko\'rinish uchun','Tez qidirish uchun','Soliq uchun','Internet uchun'],correct:1},
+    ]);
+  }
+  if(!DB.get('settings')){
+    DB.set('settings',{passPct:70,examTime:45});
+  }
+}
+
+// ═══ AUTH ════════════════════════════════════════════════════
+let ME = null;
+
+function autoLogin(){
+  // Telegram user ma'lumotidan login
+  const tgUser = tg?.initDataUnsafe?.user;
+  const sid = DB.get('session');
+  if(sid){
+    const users = DB.get('users')||[];
+    ME = users.find(u=>u.id===sid);
+    if(ME) return true;
+  }
+  // Default: login sahifasini ko'rsatish kerak
+  // Lekin Mini App uchun sodda qilamiz — admin auto-login
+  return false;
+}
+
+function login(username, password){
+  const users = DB.get('users')||[];
+  const user = users.find(u=>u.username===username && u.password===password);
+  if(user){
+    ME = user;
+    DB.set('session', user.id);
+    return true;
+  }
+  return false;
+}
+
+function logout(){
+  ME = null;
+  DB.set('session', null);
+  showLoginPage();
+}
+
+// ═══ LOGIN PAGE ═══════════════════════════════════════════════
+function showLoginPage(){
+  document.body.innerHTML = `
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(8,80,217,0.2) 0%,transparent 70%),var(--bg);">
+    <div style="width:100%;max-width:340px;">
+      <div style="font-family:'Unbounded',sans-serif;font-size:28px;font-weight:900;color:#fff;margin-bottom:4px;">BITO<span style="color:var(--blue)">.</span></div>
+      <div style="color:var(--text-dim);font-size:13px;margin-bottom:32px;">Academy 3.0</div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Login</label>
+        <input id="l-user" class="form-input" type="text" placeholder="username">
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Parol</label>
+        <input id="l-pass" class="form-input" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Kirish →</button>
+      <div id="l-err" style="color:var(--red);font-size:13px;text-align:center;margin-top:12px;display:none;">❌ Login yoki parol noto'g'ri</div>
+    </div>
+  </div>`;
+}
+
+function doLogin(){
+  const u = document.getElementById('l-user')?.value?.trim();
+  const p = document.getElementById('l-pass')?.value;
+  if(login(u,p)){
+    initApp();
+  } else {
+    const err = document.getElementById('l-err');
+    if(err) err.style.display='block';
+  }
+}
+
+// ═══ NAV ══════════════════════════════════════════════════════
+const NAVS = {
+  admin:[
+    {id:'home',icon:'📊',label:'Dashboard'},
+    {id:'users',icon:'👥',label:'Foydalanuvchilar'},
+    {id:'kurs',icon:'📚',label:'Darslar'},
+    {id:'settings',icon:'⚙️',label:'Sozlamalar'},
+  ],
+  mentor:[
+    {id:'home',icon:'📊',label:'Dashboard'},
+    {id:'users',icon:'👥',label:'Foydalanuvchilar'},
+    {id:'kurs',icon:'📚',label:'Darslar'},
+    {id:'settings',icon:'⚙️',label:'Sozlamalar'},
+  ],
+  integrator:[
+    {id:'kurs',icon:'📚',label:'Darslar'},
+    {id:'test',icon:'📝',label:'Test'},
+    {id:'settings',icon:'⚙️',label:'Sozlamalar'},
+  ],
+};
+
+let currentPage = '';
+
+function buildNav(){
+  const items = NAVS[ME.role]||NAVS.integrator;
+  document.getElementById('bottom-nav').innerHTML = items.map(item=>`
+    <button class="nav-btn ${currentPage===item.id?'active':''}" onclick="goTo('${item.id}')">
+      <span class="icon">${item.icon}</span>${item.label}
+    </button>
+  `).join('');
+}
+
+function goTo(page){
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const p = document.getElementById('page-'+page);
+  if(p) p.classList.add('active');
+  buildNav();
+  renderPage(page);
+}
+
+function renderPage(page){
+  if(page==='home') renderHome();
+  if(page==='kurs') renderKurs();
+  if(page==='users') renderUsers();
+  if(page==='settings') renderSettings();
+  if(page==='test') renderTest();
+}
+
+// ═══ HOME ════════════════════════════════════════════════════
+function renderHome(){
+  const users = DB.get('users')||[];
+  const integrators = users.filter(u=>u.role==='integrator');
+  const lessons = DB.get('lessons')||[];
+  document.getElementById('s-total').textContent = integrators.length;
+  document.getElementById('s-active').textContent = integrators.filter(u=>(u.days||[]).length>0).length;
+  document.getElementById('s-cert').textContent = integrators.filter(u=>(u.days||[]).length>=14).length;
+  document.getElementById('s-lessons').textContent = lessons.length;
+
+  const top = [...integrators].sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,5);
+  document.getElementById('top-list').innerHTML = top.length ? top.map((u,i)=>`
+    <div class="user-item">
+      <div style="font-family:'Unbounded',sans-serif;font-size:14px;color:var(--text-dim);width:20px;">${i+1}</div>
+      <div class="avatar">${u.fullname[0]}</div>
+      <div class="user-info">
+        <div class="user-name">${u.fullname}</div>
+        <div class="user-meta">${(u.days||[]).length}/14 kun · ⭐${u.score||0}</div>
+      </div>
+      <span class="badge ${i===0?'badge-yellow':i===1?'badge-gray':'badge-blue'}">${['🥇','🥈','🥉'][i]||''}</span>
+    </div>
+  `).join('') : '<div class="empty"><div class="empty-icon">🎯</div>Hali ma\'lumot yo\'q</div>';
+}
+
+// ═══ KURS ════════════════════════════════════════════════════
+function renderKurs(){
+  const users = DB.get('users')||[];
+  const me = users.find(u=>u.id===ME.id)||ME;
+  const done = me.days||[];
+  const pct = Math.round(done.length/14*100);
+  const circ = 176;
+  document.getElementById('ring-circle').style.strokeDashoffset = circ-(circ*pct/100);
+  document.getElementById('ring-pct').textContent = pct+'%';
+  document.getElementById('ring-days').textContent = `${done.length}/14`;
+  document.getElementById('ring-streak').textContent = `🔥 ${me.streak||0} kun streak`;
+  document.getElementById('ring-score').textContent = `⭐ ${me.score||0} ball`;
+
+  const lessons = (DB.get('lessons')||[]).sort((a,b)=>a.day-b.day);
+  document.getElementById('my-lessons').innerHTML = lessons.map(l=>{
+    const isDone = done.includes(l.day);
+    const isLocked = !isDone && l.day>1 && !done.includes(l.day-1) && done.length<l.day-1;
+    return `
+    <div class="lesson-item" onclick="${isLocked?'showToast(\'Avvalgi kunni tugallang\',\'error\')':'openLesson('+l.id+')'}">
+      <div class="lesson-num ${isDone?'done':isLocked?'locked':''}">${isDone?'✓':l.day}</div>
+      <div class="lesson-info">
+        <div class="lesson-title">${l.title}</div>
+        <div class="lesson-meta">${(l.tasks||[]).length} topshiriq${l.video?' · 🎬':''}${isDone?' · ✅ Tugallangan':''}</div>
+      </div>
+      <div class="lesson-arrow">${isLocked?'🔒':'›'}</div>
+    </div>`;
+  }).join('')||'<div class="empty"><div class="empty-icon">📚</div>Darslar yo\'q</div>';
+
+  showLessonList();
+}
+
+function showLessonList(){
+  document.getElementById('lessons-list-view').style.display='block';
+  document.getElementById('lesson-detail-view').style.display='none';
+}
+
+function openLesson(id){
+  const lessons = DB.get('lessons')||[];
+  const l = lessons.find(l=>l.id===id);
+  if(!l) return;
+  const users = DB.get('users')||[];
+  const me = users.find(u=>u.id===ME.id)||ME;
+  const isDone = (me.days||[]).includes(l.day);
+
+  const videoHtml = l.video ? `
+    <div class="video-wrap" style="margin-bottom:14px;">
+      <iframe src="${getYtEmbed(l.video)}" allowfullscreen></iframe>
+    </div>` : '';
+
+  document.getElementById('lesson-detail-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div class="lesson-num" style="width:40px;height:40px;font-size:14px;">${l.day}</div>
+      <div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;">${l.title}</div>
+        <div style="color:var(--text-dim);font-size:12px;">${l.day}-kun</div>
+      </div>
+    </div>
+    ${videoHtml}
+    ${l.theory?`<div class="theory-box">${l.theory}</div>`:''}
+    ${(l.tasks||[]).length?`
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">✅ Topshiriqlar</div>
+      ${(l.tasks||[]).map(t=>`<div class="task-item"><span style="color:var(--blue);">☐</span>${t}</div>`).join('')}
+    </div>`:''}
+    ${l.homework?`<div style="background:var(--blue-dim);border:1px solid var(--blue-border);border-radius:var(--r);padding:12px;font-size:13px;margin-bottom:14px;">📝 ${l.homework}</div>`:''}
+    <button class="complete-btn" onclick="markDone(${l.day})" ${isDone?'disabled':''}>
+      ${isDone?'✅ Tugallangan':'✅ Kunni tugatlash'}
+    </button>
+  `;
+  document.getElementById('lessons-list-view').style.display='none';
+  document.getElementById('lesson-detail-view').style.display='block';
+}
+
+function markDone(day){
+  const users = DB.get('users')||[];
+  const idx = users.findIndex(u=>u.id===ME.id);
+  if(idx>-1){
+    if(!users[idx].days) users[idx].days=[];
+    if(!users[idx].days.includes(day)){
+      users[idx].days.push(day);
+      users[idx].score = (users[idx].score||0)+10;
+      users[idx].streak = (users[idx].streak||0)+1;
+      DB.set('users',users);
+      ME = users[idx];
+      DB.set('session', ME.id);
+      showToast(`✅ ${day}-kun tugallandi! +10 ball`);
+      renderKurs();
+      showLessonList();
+    }
+  }
+}
+
+function getYtEmbed(url){
+  const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m?`https://www.youtube.com/embed/${m[1]}?rel=0`:'';
+}
+
+// ═══ TEST ════════════════════════════════════════════════════
+let testAnswers={}, testTimer=null;
+
+function renderTest(){
+  document.getElementById('test-intro').style.display='block';
+  document.getElementById('test-questions').style.display='none';
+  document.getElementById('test-result').style.display='none';
+  if(testTimer){clearInterval(testTimer);testTimer=null;}
+  testAnswers={};
+}
+
+function startTest(){
+  const questions = DB.get('questions')||[];
+  if(questions.length<2) return showToast('Kamida 2 ta savol kerak','error');
+  const settings = DB.get('settings')||{examTime:45,passPct:70};
+  testAnswers={};
+  document.getElementById('test-intro').style.display='none';
+  document.getElementById('test-questions').style.display='block';
+  document.getElementById('test-questions').innerHTML = questions.map((q,qi)=>`
+    <div class="q-card">
+      <div style="font-size:11px;color:var(--blue);font-weight:700;margin-bottom:8px;">SAVOL ${qi+1}/${questions.length}</div>
+      <div class="q-text">${q.text}</div>
+      ${(q.options||[]).map((o,oi)=>`
+        <div class="q-opt" id="opt-${qi}-${oi}" onclick="pickAns(${qi},${oi},${q.correct})">
+          <span style="font-weight:700;color:var(--blue);width:18px;">${['A','B','C','D'][oi]}</span>${o}
+        </div>
+      `).join('')}
+    </div>
+  `).join('')+`<button class="btn btn-primary" onclick="submitTest()">📤 Yakunlash</button>`;
+}
+
+function pickAns(qi,oi,correct){
+  testAnswers[qi]=oi;
+  const card = document.getElementById(`opt-${qi}-0`)?.parentElement;
+  if(!card) return;
+  card.querySelectorAll('.q-opt').forEach((el,i)=>el.classList.toggle('selected',i===oi));
+}
+
+function submitTest(){
+  const questions = DB.get('questions')||[];
+  const settings = DB.get('settings')||{passPct:70};
+  let correct=0;
+  questions.forEach((q,qi)=>{if(testAnswers[qi]===q.correct)correct++;});
+  const pct = Math.round(correct/questions.length*100);
+  const passed = pct>=settings.passPct;
+  document.getElementById('test-questions').style.display='none';
+  document.getElementById('test-result').style.display='block';
+  document.getElementById('test-result').innerHTML=`
+    <div style="font-size:56px;margin-bottom:12px;">${passed?'🏆':'😔'}</div>
+    <div style="font-family:'Unbounded',sans-serif;font-size:36px;font-weight:900;color:${passed?'var(--green)':'var(--red)'};">${pct}%</div>
+    <div style="font-size:15px;font-weight:600;margin:8px 0;">${correct}/${questions.length} to'g'ri</div>
+    <div style="color:var(--text-dim);font-size:13px;margin-bottom:20px;">${passed?'Sertifikatga haqli!':'Qayta urinib ko\'ring'}</div>
+    ${passed?'<span class="badge badge-green" style="font-size:13px;padding:8px 16px;">✅ O\'tdingiz!</span>':
+    '<button class="btn btn-primary" style="max-width:200px;margin:0 auto;" onclick="renderTest()">🔄 Qayta</button>'}
+  `;
+}
+
+// ═══ USERS ════════════════════════════════════════════════════
+function renderUsers(){
+  const users = DB.get('users')||[];
+  const roleLabel={admin:'Admin',mentor:'Mentor',integrator:'Integrator'};
+  const roleBadge={admin:'badge-red',mentor:'badge-yellow',integrator:'badge-blue'};
+  document.getElementById('users-list').innerHTML = users.map(u=>{
+    const pct = Math.round((u.days||[]).length/14*100);
+    return `
+    <div class="card" style="padding:12px;">
+      <div class="user-item" style="padding:0;border:none;margin-bottom:8px;">
+        <div class="avatar">${u.fullname[0]}</div>
+        <div class="user-info">
+          <div class="user-name">${u.fullname}</div>
+          <div class="user-meta">@${u.username} · ⭐${u.score||0}</div>
+        </div>
+        <span class="badge ${roleBadge[u.role]||'badge-gray'}">${roleLabel[u.role]||u.role}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">${(u.days||[]).length}/14 kun</div>
+      <div class="progress-bar"><div class="progress-fill ${pct>=100?'green':''}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('')||'<div class="empty"><div class="empty-icon">👥</div>Foydalanuvchilar yo\'q</div>';
+}
+
+function showAddUser(){ openModal('modal-add-user'); }
+function addUser(){
+  const name=document.getElementById('nu-name').value.trim();
+  const user=document.getElementById('nu-user').value.trim();
+  const pass=document.getElementById('nu-pass').value;
+  const role=document.getElementById('nu-role').value;
+  if(!name||!user||!pass) return showToast('Barcha maydonlar kerak','error');
+  const users=DB.get('users')||[];
+  if(users.find(u=>u.username===user)) return showToast('Bu username band','error');
+  users.push({id:Date.now(),fullname:name,username:user,password:pass,role,score:0,days:[],streak:0,created:Date.now()});
+  DB.set('users',users);
+  closeModal('modal-add-user');
+  showToast('✅ Qo\'shildi');
+  renderUsers();
+  ['nu-name','nu-user','nu-pass'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ═══ SETTINGS ════════════════════════════════════════════════
+function renderSettings(){
+  if(ME.role==='admin'||ME.role==='mentor'){
+    document.getElementById('admin-settings').style.display='block';
+    document.getElementById('user-settings').style.display='none';
+    renderAdminLessons();
+    renderAdminQuestions();
+  } else {
+    document.getElementById('admin-settings').style.display='none';
+    document.getElementById('user-settings').style.display='block';
+  }
+}
+
+function renderAdminLessons(){
+  const lessons=(DB.get('lessons')||[]).sort((a,b)=>a.day-b.day);
+  document.getElementById('admin-lessons-list').innerHTML=lessons.map(l=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span class="badge badge-blue">${l.day}-kun</span>
+      <span style="flex:1;font-size:13px;">${l.title}</span>
+      <button onclick="editLesson(${l.id})" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:16px;">✏️</button>
+      <button onclick="delLesson(${l.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;">🗑</button>
+    </div>
+  `).join('')||'<div style="color:var(--text-dim);font-size:13px;padding:8px 0;">Darslar yo\'q</div>';
+}
+
+function renderAdminQuestions(){
+  const qs=(DB.get('questions')||[]).sort((a,b)=>a.day-b.day);
+  document.getElementById('admin-questions-list').innerHTML=qs.map(q=>`
+    <div style="padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div style="flex:1;">
+          <span class="badge badge-blue" style="margin-bottom:4px;">${q.day}-kun</span>
+          <div style="font-size:12px;">${q.text.slice(0,60)}${q.text.length>60?'...':''}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button onclick="delQuestion(${q.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;">🗑</button>
+        </div>
+      </div>
+    </div>
+  `).join('')||'<div style="color:var(--text-dim);font-size:13px;padding:8px 0;">Savollar yo\'q</div>';
+}
+
+function showAddLesson(){
+  document.getElementById('el-id').value='';
+  ['el-day','el-title','el-theory','el-video','el-hw','el-tasks'].forEach(id=>document.getElementById(id).value='');
+  openModal('modal-add-lesson');
+}
+
+function editLesson(id){
+  const lessons=DB.get('lessons')||[];
+  const l=lessons.find(l=>l.id===id);
+  if(!l) return;
+  document.getElementById('el-id').value=l.id;
+  document.getElementById('el-day').value=l.day;
+  document.getElementById('el-title').value=l.title;
+  document.getElementById('el-theory').value=l.theory||'';
+  document.getElementById('el-video').value=l.video||'';
+  document.getElementById('el-hw').value=l.homework||'';
+  document.getElementById('el-tasks').value=(l.tasks||[]).join('\n');
+  openModal('modal-add-lesson');
+}
+
+function saveLesson(){
+  const eid=document.getElementById('el-id').value;
+  const day=parseInt(document.getElementById('el-day').value);
+  const title=document.getElementById('el-title').value.trim();
+  const theory=document.getElementById('el-theory').value.trim();
+  const video=document.getElementById('el-video').value.trim();
+  const homework=document.getElementById('el-hw').value.trim();
+  const tasks=document.getElementById('el-tasks').value.split('\n').filter(t=>t.trim());
+  if(!day||!title) return showToast('Kun va sarlavha kerak','error');
+  const lessons=DB.get('lessons')||[];
+  if(eid){
+    const idx=lessons.findIndex(l=>l.id==eid);
+    if(idx>-1) lessons[idx]={...lessons[idx],day,title,theory,video,homework,tasks};
+  } else {
+    lessons.push({id:Date.now(),day,title,theory,video,homework,tasks});
+  }
+  DB.set('lessons',lessons);
+  closeModal('modal-add-lesson');
+  showToast('✅ Saqlandi');
+  renderAdminLessons();
+}
+
+function delLesson(id){
+  if(!confirm('O\'chirasizmi?')) return;
+  DB.set('lessons',(DB.get('lessons')||[]).filter(l=>l.id!==id));
+  renderAdminLessons();
+  showToast('O\'chirildi');
+}
+
+function showAddQuestion(){ openModal('modal-add-question'); }
+
+function saveQuestion(){
+  const day=parseInt(document.getElementById('eq-day').value);
+  const text=document.getElementById('eq-text').value.trim();
+  const a=document.getElementById('eq-a').value.trim();
+  const b=document.getElementById('eq-b').value.trim();
+  const c=document.getElementById('eq-c').value.trim();
+  const d=document.getElementById('eq-d').value.trim();
+  const correct=parseInt(document.getElementById('eq-correct').value);
+  if(!day||!text||!a||!b) return showToast('Kun, savol va 2 variant kerak','error');
+  const options=[a,b,c,d].filter(Boolean);
+  const qs=DB.get('questions')||[];
+  qs.push({id:Date.now(),day,text,options,correct});
+  DB.set('questions',qs);
+  closeModal('modal-add-question');
+  showToast('✅ Saqlandi');
+  renderAdminQuestions();
+}
+
+function delQuestion(id){
+  DB.set('questions',(DB.get('questions')||[]).filter(q=>q.id!==id));
+  renderAdminQuestions();
+  showToast('O\'chirildi');
+}
+
+function changePass(){
+  const cur=document.getElementById('cur-pass').value;
+  const nw=document.getElementById('new-pass').value;
+  const cf=document.getElementById('conf-pass').value;
+  if(cur!==ME.password) return showToast('Joriy parol noto\'g\'ri','error');
+  if(nw!==cf) return showToast('Parollar mos emas','error');
+  const users=DB.get('users')||[];
+  const idx=users.findIndex(u=>u.id===ME.id);
+  if(idx>-1){users[idx].password=nw;DB.set('users',users);ME.password=nw;}
+  showToast('✅ Parol o\'zgartirildi');
+}
+
+// ═══ UTILS ═══════════════════════════════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m) m.classList.remove('show');});
+});
+
+function showToast(msg, type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast show '+(type==='error'?'error':'success');
+  setTimeout(()=>t.className='toast',3000);
+}
+
+// ═══ INIT ════════════════════════════════════════════════════
+function initApp(){
+  // Restore topbar
+  if(!document.getElementById('bottom-nav')){
+    location.reload();
+    return;
+  }
+  document.getElementById('topbar-user').textContent = ME.fullname.split(' ')[0];
+  const roleLabels={admin:'Admin',mentor:'Mentor',integrator:'Integrator'};
+  const roleBadge=document.getElementById('topbar-role');
+  roleBadge.textContent=roleLabels[ME.role]||ME.role;
+  roleBadge.className='badge '+(ME.role==='admin'?'badge-red':ME.role==='mentor'?'badge-yellow':'badge-blue');
+
+  const first = ME.role==='integrator'?'kurs':'home';
+  goTo(first);
+}
+
+// BOOT
+initDB();
+if(autoLogin()){
+  initApp();
+} else {
+  showLoginPage();
+}
+</script>
+</body>
+</html>

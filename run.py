@@ -1,25 +1,23 @@
 import threading
-import asyncio
 import os
-import sys
-
-def run_flask():
-    """Flask web server ni ishga tushirish"""
-    from app import app
-    port = int(os.environ.get("PORT", 8080))
-    print(f"🌐 Web server ishga tushdi: port {port}")
-    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+import time
 
 def run_bot():
-    """Telegram botni ishga tushirish"""
+    time.sleep(2)
     print("🤖 Telegram bot ishga tushmoqda...")
-    from bot import main
-    main()
+    try:
+        from bot import main
+        main()
+    except Exception as e:
+        print(f"❌ Bot xatolik: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
-    # Flask ni alohida threadda ishga tushiramiz
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
+    bot_thread.start()
 
-    # Bot asosiy threadda ishlaydi
-    run_bot()
+    from app import app
+    port = int(os.environ.get("PORT", 8080))
+    print(f"🌐 Web server port {port} da ishga tushdi")
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False, threaded=True)
